@@ -3,6 +3,7 @@
 // instead of the target type itself.
 // You can read more about it at https://doc.rust-lang.org/std/convert/trait.TryFrom.html
 use std::convert::{TryInto, TryFrom};
+use std::num::TryFromIntError;
 
 #[derive(Debug)]
 struct Color {
@@ -10,8 +11,6 @@ struct Color {
     green: u8,
     blue: u8,
 }
-
-// I AM NOT DONE
 
 // Your task is to complete this implementation
 // and return an Ok result of inner type Color.
@@ -24,15 +23,21 @@ struct Color {
 
 // Tuple implementation
 impl TryFrom<(i16, i16, i16)> for Color {
-    type Error = String;
-    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+    type Error = TryFromIntError;
+    fn try_from((r, g, b): (i16, i16, i16)) -> Result<Self, Self::Error> {
+        Ok(Color {
+            red: r.try_into()?,
+            green: g.try_into()?,
+            blue: b.try_into()?
+        })
     }
 }
 
 // Array implementation
 impl TryFrom<[i16; 3]> for Color {
-    type Error = String;
-    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+    type Error = TryFromIntError;
+    fn try_from([r, g, b]: [i16; 3]) -> Result<Self, Self::Error> {
+        Color::try_from((r, g, b))
     }
 }
 
@@ -40,6 +45,10 @@ impl TryFrom<[i16; 3]> for Color {
 impl TryFrom<&[i16]> for Color {
     type Error = String;
     fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        match slice {
+            [r, g, b] => Color::try_from((*r, *g, *b)).map_err(|_| String::from("One of r,g,b is out of range 0-255")),
+            _ => Err(format!("Expected slice length 3, got {}", slice.len()))
+        }
     }
 }
 
